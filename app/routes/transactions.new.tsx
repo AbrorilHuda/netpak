@@ -30,6 +30,7 @@ interface Product {
   name: string;
   cost_price: number;
   selling_price: number;
+  duration_weeks: number;
 }
 
 export default function NewTransaction() {
@@ -51,6 +52,7 @@ export default function NewTransaction() {
     paid_amount: '',
     payment_method: 'cash',
     notes: '',
+    duration_weeks: 1,
   });
 
   const [searchCustomerQuery, setSearchCustomerQuery] = useState('');
@@ -98,7 +100,7 @@ export default function NewTransaction() {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, cost_price, selling_price')
+        .select('id, name, cost_price, selling_price, duration_weeks')
         .eq('user_id', user?.id)
         .eq('is_active', true)
         .order('name', { ascending: true });
@@ -120,6 +122,7 @@ export default function NewTransaction() {
         cost_price: product.cost_price.toString(),
         selling_price: product.selling_price.toString(),
         paid_amount: product.selling_price.toString(),
+        duration_weeks: product.duration_weeks || 1,
       });
     } else {
       setFormData({
@@ -129,6 +132,7 @@ export default function NewTransaction() {
         cost_price: '',
         selling_price: '',
         paid_amount: '',
+        duration_weeks: 1,
       });
     }
   };
@@ -165,6 +169,13 @@ export default function NewTransaction() {
       const profitAmount = calculateProfit(sellingPrice, costPrice);
       const paymentStatus = calculatePaymentStatus(sellingPrice, paidAmount);
 
+      const renewalHistory: Record<string, string | null> = {};
+      if (formData.duration_weeks > 1) {
+        for (let w = 1; w <= formData.duration_weeks; w++) {
+          renewalHistory[w.toString()] = w === 1 ? formData.transaction_date : null;
+        }
+      }
+
       const { error: insertError } = await supabase
         .from('transactions')
         .insert({
@@ -181,6 +192,9 @@ export default function NewTransaction() {
           payment_status: paymentStatus,
           payment_method: formData.payment_method === 'debt' ? null : (formData.payment_method as any),
           notes: formData.notes || null,
+          duration_weeks: formData.duration_weeks,
+          completed_weeks: 1,
+          renewal_history: renewalHistory,
         });
 
       if (insertError) throw insertError;

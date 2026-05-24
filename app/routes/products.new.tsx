@@ -6,6 +6,7 @@ import { Header } from '~/components/layout/Header';
 import { Card, CardBody } from '~/components/ui/Card';
 import { Button } from '~/components/ui/Button';
 import { Input } from '~/components/ui/Input';
+import { Select } from '~/components/ui/Select';
 import { useAuth } from '~/lib/auth';
 import { supabase } from '~/lib/supabase';
 import { parseCurrency } from '~/lib/currency';
@@ -25,6 +26,7 @@ export default function NewProduct() {
   const [formData, setFormData] = useState({
     name: '',
     provider: '',
+    duration_weeks: '1',
     cost_price: '',
     selling_price: '',
     description: '',
@@ -54,6 +56,7 @@ export default function NewProduct() {
           cost_price: costPrice,
           selling_price: sellingPrice,
           description: formData.description || null,
+          duration_weeks: parseInt(formData.duration_weeks) || 1,
           is_active: true,
         });
 
@@ -103,6 +106,17 @@ export default function NewProduct() {
                 placeholder="Contoh: Telkomsel, XL, Axis"
                 value={formData.provider}
                 onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
+                disabled={loading}
+              />
+
+              <Select
+                label="Durasi Paket"
+                value={formData.duration_weeks}
+                onChange={(e) => setFormData({ ...formData, duration_weeks: e.target.value })}
+                options={[
+                  { value: '1', label: '1 Minggu (Paket Biasa)' },
+                  { value: '4', label: '4 Minggu (Dengan Checklist Perpanjangan)' },
+                ]}
                 disabled={loading}
               />
 

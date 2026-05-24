@@ -243,3 +243,17 @@ create trigger update_transactions_updated_at
 --   ('your-user-id', 'Kuota 20 GB', 'Telkomsel', 78000, 90000, true),
 --   ('your-user-id', 'Kuota 5 GB', 'XL', 23000, 28000, true),
 --   ('your-user-id', 'Kuota 10 GB', 'XL', 40000, 48000, true);
+
+-- ============================================
+-- MIGRATION: 4-WEEK PACKAGE RENEWAL TRACKING
+-- ============================================
+-- Jalankan perintah ini jika Anda sudah membuat tabel sebelumnya:
+
+-- Tambahkan kolom durasi pada tabel products
+alter table products add column if not exists duration_weeks integer not null default 1;
+
+-- Tambahkan kolom pelacakan pada tabel transactions
+alter table transactions add column if not exists duration_weeks integer not null default 1;
+alter table transactions add column if not exists completed_weeks integer not null default 1;
+alter table transactions add column if not exists renewal_history jsonb default '{}'::jsonb;
+

@@ -6,6 +6,7 @@ import { Header } from '~/components/layout/Header';
 import { Card, CardBody } from '~/components/ui/Card';
 import { Button } from '~/components/ui/Button';
 import { Input } from '~/components/ui/Input';
+import { Select } from '~/components/ui/Select';
 import { useAuth } from '~/lib/auth';
 import { supabase } from '~/lib/supabase';
 import { parseCurrency } from '~/lib/currency';
@@ -29,6 +30,7 @@ export default function EditProduct() {
   const [formData, setFormData] = useState({
     name: '',
     provider: '',
+    duration_weeks: '1',
     cost_price: '',
     selling_price: '',
     description: '',
@@ -56,6 +58,7 @@ export default function EditProduct() {
         setFormData({
           name: data.name || '',
           provider: data.provider || '',
+          duration_weeks: (data.duration_weeks || 1).toString(),
           cost_price: data.cost_price.toString(),
           selling_price: data.selling_price.toString(),
           description: data.description || '',
@@ -92,6 +95,7 @@ export default function EditProduct() {
           cost_price: costPrice,
           selling_price: sellingPrice,
           description: formData.description || null,
+          duration_weeks: parseInt(formData.duration_weeks) || 1,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -177,6 +181,17 @@ export default function EditProduct() {
                 placeholder="Contoh: Telkomsel, XL, Axis"
                 value={formData.provider}
                 onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
+                disabled={saving || deleting}
+              />
+
+              <Select
+                label="Durasi Paket"
+                value={formData.duration_weeks}
+                onChange={(e) => setFormData({ ...formData, duration_weeks: e.target.value })}
+                options={[
+                  { value: '1', label: '1 Minggu (Paket Biasa)' },
+                  { value: '4', label: '4 Minggu (Dengan Checklist Perpanjangan)' },
+                ]}
                 disabled={saving || deleting}
               />
 

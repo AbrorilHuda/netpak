@@ -73,6 +73,7 @@ export type Database = {
           selling_price: number;
           description: string | null;
           is_active: boolean;
+          duration_weeks: number;
           created_at: string;
           updated_at: string;
         };
@@ -85,6 +86,7 @@ export type Database = {
           selling_price?: number;
           description?: string | null;
           is_active?: boolean;
+          duration_weeks?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -97,6 +99,7 @@ export type Database = {
           selling_price?: number;
           description?: string | null;
           is_active?: boolean;
+          duration_weeks?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -117,6 +120,9 @@ export type Database = {
           payment_status: 'paid' | 'debt' | 'partial' | 'cancelled';
           payment_method: 'cash' | 'transfer' | 'qris' | 'other' | null;
           notes: string | null;
+          duration_weeks: number;
+          completed_weeks: number;
+          renewal_history: any;
           created_at: string;
           updated_at: string;
         };
@@ -135,6 +141,9 @@ export type Database = {
           payment_status: 'paid' | 'debt' | 'partial' | 'cancelled';
           payment_method?: 'cash' | 'transfer' | 'qris' | 'other' | null;
           notes?: string | null;
+          duration_weeks?: number;
+          completed_weeks?: number;
+          renewal_history?: any;
           created_at?: string;
           updated_at?: string;
         };
@@ -153,6 +162,9 @@ export type Database = {
           payment_status?: 'paid' | 'debt' | 'partial' | 'cancelled';
           payment_method?: 'cash' | 'transfer' | 'qris' | 'other' | null;
           notes?: string | null;
+          duration_weeks?: number;
+          completed_weeks?: number;
+          renewal_history?: any;
           created_at?: string;
           updated_at?: string;
         };
