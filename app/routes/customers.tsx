@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import type { Route } from './+types/customers';
 import { AppShell } from '~/components/layout/AppShell';
@@ -15,12 +15,9 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-interface Customer {
-  id: string;
-  name: string;
-  phone: string | null;
-  address: string | null;
-  created_at: string;
+import type { Customer } from '~/types';
+
+interface CustomerWithPackage extends Customer {
   activePackage?: {
     product_name: string;
     completed_weeks: number;
@@ -30,8 +27,7 @@ interface Customer {
 
 export default function Customers() {
   const { user } = useAuth();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<CustomerWithPackage[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'active_package'>('all');
@@ -42,8 +38,20 @@ export default function Customers() {
     }
   }, [user]);
 
-  useEffect(() => {
-    filterCustomers();
+  // Derive filtered customers during render
+  const filteredCustomers = useMemo(() => {
+    let filtered = customers;
+    if (filterType === 'active_package') {
+      filtered = filtered.filter(c => !!c.activePackage);
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        c.phone?.toLowerCase().includes(q)
+      );
+    }
+    return filtered;
   }, [customers, search, filterType]);
 
   const loadCustomers = async () => {
@@ -87,7 +95,7 @@ export default function Customers() {
         } as Customer;
       });
 
-      setCustomers(mappedCustomers);
+      setCustomers(mappedCustomers as CustomerWithPackage[]);
     } catch (error) {
       console.error('Error loading customers:', error);
     } finally {
@@ -95,29 +103,13 @@ export default function Customers() {
     }
   };
 
-  const filterCustomers = () => {
-    let filtered = customers;
-
-    if (filterType === 'active_package') {
-      filtered = filtered.filter(c => !!c.activePackage);
-    }
-
-    if (search) {
-      filtered = filtered.filter(c =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.phone?.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    setFilteredCustomers(filtered);
-  };
 
   if (loading) {
     return (
       <AppShell>
         <Header title="Pelanggan" />
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-indigo-100 border-t-indigo-600" />
         </div>
       </AppShell>
     );
@@ -149,14 +141,14 @@ export default function Customers() {
         />
 
         {/* Filter Tab Pills */}
-        <div className="flex gap-2 p-1 bg-slate-50 border border-slate-100 rounded-2xl">
+        <div className="flex gap-2 p-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl">
           <button
             type="button"
             onClick={() => setFilterType('all')}
             className={`flex-1 py-2 text-xs font-bold text-center rounded-xl transition-all duration-200 ${
               filterType === 'all'
-                ? 'bg-white text-indigo-600 shadow-xs border border-slate-100'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xs border border-slate-100 dark:border-slate-800'
+                : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200'
             }`}
           >
             Semua Pelanggan
@@ -166,8 +158,8 @@ export default function Customers() {
             onClick={() => setFilterType('active_package')}
             className={`flex-1 py-2 text-xs font-bold text-center rounded-xl flex items-center justify-center gap-1.5 transition-all duration-200 ${
               filterType === 'active_package'
-                ? 'bg-white text-indigo-600 shadow-xs border border-slate-100'
-                : 'text-slate-500 hover:text-indigo-600'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xs border border-slate-100 dark:border-slate-800'
+                : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-indigo-600'
             }`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${filterType === 'active_package' ? 'bg-indigo-600 animate-pulse' : 'bg-indigo-400'}`} />
@@ -188,12 +180,12 @@ export default function Customers() {
           <div className="space-y-2">
             {filteredCustomers.map((customer) => (
               <Link key={customer.id} to={`/customers/${customer.id}`}>
-                <Card className="hover:bg-slate-50/50 transition-colors duration-200 border-slate-100/50 shadow-xs">
+                <Card className="hover:bg-slate-50/50 transition-colors duration-200 border-slate-100 dark:border-slate-800/50 shadow-xs">
                   <CardBody className="p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-extrabold text-slate-800">
+                          <p className="font-extrabold text-slate-800 dark:text-slate-100">
                             {customer.name}
                           </p>
                           {customer.activePackage && (
@@ -204,17 +196,17 @@ export default function Customers() {
                           )}
                         </div>
                         {customer.phone && (
-                          <p className="text-xs text-slate-500 mt-1 font-semibold">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1 font-semibold">
                             {customer.phone}
                           </p>
                         )}
                         {customer.address && (
-                          <p className="text-[10px] text-slate-400 mt-0.5 font-medium truncate">
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium truncate">
                             {customer.address}
                           </p>
                         )}
                       </div>
-                      <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </div>

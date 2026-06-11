@@ -18,13 +18,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     className = '',
     ...props 
   }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-[0.96] active:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100';
+    const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 active:scale-[0.96] active:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100';
     
     const variants = {
-      primary: 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700 focus:ring-indigo-500 shadow-md shadow-indigo-200/50 hover:shadow-lg hover:shadow-indigo-200/60',
-      secondary: 'bg-slate-100 text-slate-800 hover:bg-slate-200 focus:ring-slate-300 shadow-sm',
-      danger: 'bg-gradient-to-r from-rose-600 to-red-600 text-white hover:from-rose-700 hover:to-red-700 focus:ring-rose-500 shadow-md shadow-rose-200/50',
-      ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 focus:ring-slate-200',
+      primary: 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700 focus:ring-indigo-500 shadow-md shadow-indigo-200/50 dark:shadow-indigo-950/50 hover:shadow-lg hover:shadow-indigo-200/60',
+      secondary: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 focus:ring-slate-300 shadow-sm',
+      danger: 'bg-gradient-to-r from-rose-600 to-red-600 text-white hover:from-rose-700 hover:to-red-700 focus:ring-rose-500 shadow-md shadow-rose-200/50 dark:shadow-rose-950/50',
+      ghost: 'bg-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-slate-200',
     };
     
     const sizes = {

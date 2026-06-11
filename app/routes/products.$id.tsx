@@ -150,7 +150,7 @@ export default function EditProduct() {
       <Header 
         title="Edit Produk" 
         action={
-          <button onClick={() => navigate(-1)} className="text-sm font-bold text-slate-500 hover:text-slate-700">
+          <button onClick={() => navigate(-1)} className="text-sm font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200">
             Batal
           </button>
         }

@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
+import { useAuth } from '~/lib/auth';
+import { supabase } from '~/lib/supabase';
 
 interface NavItem {
   path: string;
@@ -56,9 +59,28 @@ const navItems: NavItem[] = [
 
 export function BottomNav() {
   const location = useLocation();
+  const { user } = useAuth();
+  const [debtCount, setDebtCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    // Fetch number of unique customers with active debt
+    supabase
+      .from('transactions')
+      .select('customer_id', { count: 'exact', head: false })
+      .eq('user_id', user.id)
+      .in('payment_status', ['debt', 'partial'])
+      .gt('remaining_amount', 0)
+      .then(({ data }) => {
+        if (data) {
+          const uniqueCustomers = new Set(data.map((t: any) => t.customer_id));
+          setDebtCount(uniqueCustomers.size);
+        }
+      });
+  }, [user]);
 
   return (
-    <nav className="fixed bottom-4 left-4 right-4 z-40 bg-white/90 backdrop-blur-xl border border-slate-100 shadow-xl shadow-slate-200/40 rounded-3xl p-1 safe-area-inset-bottom">
+    <nav className="fixed bottom-4 left-4 right-4 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-slate-950/60 rounded-3xl p-1 safe-area-inset-bottom">
       <div className="flex justify-around items-center h-14">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
@@ -68,12 +90,17 @@ export function BottomNav() {
               to={item.path}
               className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-300 relative rounded-2xl active:scale-90 ${
                 isActive
-                  ? 'text-indigo-600 font-bold'
-                  : 'text-slate-400 hover:text-slate-600'
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
-              <div className={`transition-transform duration-300 ${isActive ? '-translate-y-0.5 scale-110' : ''}`}>
+              <div className={`transition-transform duration-300 ${isActive ? '-translate-y-0.5 scale-110' : ''} relative`}>
                 {item.icon}
+                {item.path === '/debts' && debtCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 bg-rose-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                    {debtCount > 9 ? '9+' : debtCount}
+                  </span>
+                )}
               </div>
               <span className="text-[10px] mt-0.5 tracking-wider uppercase font-semibold scale-90">{item.label}</span>
               {isActive && (

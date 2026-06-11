@@ -8,8 +8,10 @@ import { Button } from '~/components/ui/Button';
 import { useAuth } from '~/lib/auth';
 import { supabase } from '~/lib/supabase';
 import { formatCurrency } from '~/lib/currency';
-import { formatDateShort, getCurrentMonth, getMonthName, getMonthRange } from '~/lib/date';
-import { getPaymentStatusLabel, getPaymentStatusColor } from '~/lib/calculations';
+import { getCurrentMonth, getMonthName, getMonthRange } from '~/lib/date';
+import { getPaymentStatusLabel } from '~/lib/calculations';
+import { normalizeJoin } from '~/lib/validators';
+import type { DashboardStats, TransactionWithCustomer } from '~/types';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -18,25 +20,10 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-interface DashboardStats {
-  totalRevenue: number;
-  totalReceived: number;
-  totalDebt: number;
-  totalProfit: number;
-  totalTransactions: number;
-}
 
-interface Transaction {
-  id: string;
-  transaction_date: string;
-  product_name: string;
-  selling_price: number;
-  paid_amount: number;
-  remaining_amount: number;
-  payment_status: 'paid' | 'debt' | 'partial' | 'cancelled';
-  customer: {
-    name: string;
-  };
+interface ProfileInfo {
+  full_name: string;
+  business_name: string;
 }
 
 export default function Dashboard() {
@@ -48,9 +35,10 @@ export default function Dashboard() {
     totalProfit: 0,
     totalTransactions: 0,
   });
-  const [profile, setProfile] = useState<{ full_name: string; business_name: string } | null>(null);
+  const [prevStats, setPrevStats] = useState<DashboardStats | null>(null);
+  const [profile, setProfile] = useState<ProfileInfo | null>(null);
   const [totalCustomers, setTotalCustomers] = useState(0);
-  const [todayTransactions, setTodayTransactions] = useState<Transaction[]>([]);
+  const [todayTransactions, setTodayTransactions] = useState<TransactionWithCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const { year, month } = getCurrentMonth();
 
@@ -60,75 +48,80 @@ export default function Dashboard() {
     }
   }, [user]);
 
+  const computeStats = (transactions: { selling_price: number; cost_price: number; paid_amount: number; remaining_amount: number; profit_amount: number }[]): DashboardStats => ({
+    totalRevenue: transactions.reduce((sum, t) => sum + t.selling_price, 0),
+    totalReceived: transactions.reduce((sum, t) => sum + t.paid_amount, 0),
+    totalDebt: transactions.reduce((sum, t) => sum + t.remaining_amount, 0),
+    totalProfit: transactions.reduce((sum, t) => sum + t.profit_amount, 0),
+    totalTransactions: transactions.length,
+  });
+
   const loadDashboardData = async () => {
     try {
       const { start, end } = getMonthRange(year, month);
-      
-      // Load monthly stats
-      const { data: transactions, error: transError } = await supabase
-        .from('transactions')
-        .select('selling_price, cost_price, paid_amount, remaining_amount, profit_amount')
-        .eq('user_id', user?.id)
-        .gte('transaction_date', start)
-        .lte('transaction_date', end)
-        .neq('payment_status', 'cancelled');
 
-      if (transError) throw transError;
+      // Previous month range for comparison
+      const prevMonth = month === 1 ? 12 : month - 1;
+      const prevYear = month === 1 ? year - 1 : year;
+      const { start: prevStart, end: prevEnd } = getMonthRange(prevYear, prevMonth);
 
-      const stats: DashboardStats = {
-        totalRevenue: transactions?.reduce((sum, t) => sum + t.selling_price, 0) || 0,
-        totalReceived: transactions?.reduce((sum, t) => sum + t.paid_amount, 0) || 0,
-        totalDebt: transactions?.reduce((sum, t) => sum + t.remaining_amount, 0) || 0,
-        totalProfit: transactions?.reduce((sum, t) => sum + t.profit_amount, 0) || 0,
-        totalTransactions: transactions?.length || 0,
-      };
-
-      setStats(stats);
-
-      // Load profile details
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name, business_name')
-        .eq('id', user?.id)
-        .maybeSingle();
-
-      if (profileData) {
-        setProfile(profileData);
-      }
-
-      // Load total customers count
-      const { count: customersCount } = await supabase
-        .from('customers')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user?.id);
-
-      setTotalCustomers(customersCount || 0);
-
-      // Load today's transactions
       const today = new Date().toISOString().split('T')[0];
-      const { data: todayData, error: todayError } = await supabase
-        .from('transactions')
-        .select(`
-          id,
-          transaction_date,
-          product_name,
-          selling_price,
-          paid_amount,
-          remaining_amount,
-          payment_status,
-          customer:customers(name)
-        `)
-        .eq('user_id', user?.id)
-        .eq('transaction_date', today)
-        .order('created_at', { ascending: false })
-        .limit(5);
 
-      if (todayError) throw todayError;
+      // Run ALL independent queries in parallel
+      const [
+        transResult,
+        prevTransResult,
+        profileResult,
+        customersCountResult,
+        todayResult,
+      ] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('selling_price, cost_price, paid_amount, remaining_amount, profit_amount')
+          .eq('user_id', user!.id)
+          .gte('transaction_date', start)
+          .lte('transaction_date', end)
+          .neq('payment_status', 'cancelled'),
+        supabase
+          .from('transactions')
+          .select('selling_price, cost_price, paid_amount, remaining_amount, profit_amount')
+          .eq('user_id', user!.id)
+          .gte('transaction_date', prevStart)
+          .lte('transaction_date', prevEnd)
+          .neq('payment_status', 'cancelled'),
+        supabase
+          .from('profiles')
+          .select('full_name, business_name')
+          .eq('id', user!.id)
+          .maybeSingle(),
+        supabase
+          .from('customers')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user!.id),
+        supabase
+          .from('transactions')
+          .select('id, transaction_date, product_name, selling_price, paid_amount, remaining_amount, payment_status, customer:customers(name)')
+          .eq('user_id', user!.id)
+          .eq('transaction_date', today)
+          .order('created_at', { ascending: false })
+          .limit(5),
+      ]);
 
-      const formattedTodayData = (todayData || []).map((t: any) => ({
+      if (transResult.error) throw transResult.error;
+      if (todayResult.error) throw todayResult.error;
+
+      setStats(computeStats(transResult.data || []));
+      setPrevStats(computeStats(prevTransResult.data || []));
+
+      if (profileResult.data) {
+        setProfile(profileResult.data as ProfileInfo);
+      }
+      setTotalCustomers(customersCountResult.count || 0);
+
+      const formattedTodayData = (todayResult.data || []).map((t: any) => ({
         ...t,
-        customer: Array.isArray(t.customer) ? t.customer[0] : t.customer,
-      })) as unknown as Transaction[];
+        customer: normalizeJoin(t.customer),
+      })) as TransactionWithCustomer[];
 
       setTodayTransactions(formattedTodayData);
     } catch (error) {
@@ -166,10 +159,10 @@ export default function Dashboard() {
         {/* Welcome Banner */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Halo, {profile?.full_name || 'Admin'}</h2>
-            <p className="text-xs text-slate-400 font-semibold mt-0.5">Kelola kuota & pantau arus kas Anda.</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 tracking-tight">Halo, {profile?.full_name || 'Admin'}</h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 font-semibold mt-0.5">Kelola kuota & pantau arus kas Anda.</p>
           </div>
-          <div className="w-10 h-10 bg-slate-100 border border-slate-200/50 rounded-full flex items-center justify-center font-bold text-slate-700 text-sm">
+          <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 dark:border-slate-700 rounded-full flex items-center justify-center font-bold text-slate-700 dark:text-slate-300 text-sm">
             {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'A'}
           </div>
         </div>
@@ -181,7 +174,7 @@ export default function Dashboard() {
           
           <div className="flex justify-between items-start relative z-10">
             <div>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Total Laba Bersih</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500">Total Laba Bersih</p>
               <h3 className="text-2xl font-extrabold tracking-tight mt-1.5">
                 {formatCurrency(stats.totalProfit)}
               </h3>
@@ -192,11 +185,11 @@ export default function Dashboard() {
 
           <div className="mt-8 flex justify-between items-end relative z-10 border-t border-white/10 pt-4">
             <div>
-              <p className="text-[9px] uppercase font-bold tracking-wider text-slate-500">Pemilik Layanan</p>
+              <p className="text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 dark:text-slate-500">Pemilik Layanan</p>
               <p className="text-xs font-semibold text-slate-200 mt-1 uppercase tracking-wider">{profile?.business_name || 'Premium Member'}</p>
             </div>
             <div className="text-right">
-              <p className="text-[9px] uppercase font-bold tracking-wider text-slate-500">Masa Transaksi</p>
+              <p className="text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 dark:text-slate-500">Masa Transaksi</p>
               <p className="text-xs font-bold text-slate-200 mt-1">{getMonthName(month)} {year}</p>
             </div>
           </div>
@@ -204,22 +197,22 @@ export default function Dashboard() {
 
         {/* Dynamic Telemetry Mini-Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-white border-slate-100/50">
+          <Card className="bg-white dark:bg-slate-900 dark:bg-slate-900 border-slate-100 dark:border-slate-800/50 dark:border-slate-800">
             <CardBody className="p-4.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Omzet</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500">Omzet</span>
                 <div className="w-2 h-2 rounded-full bg-indigo-500" />
               </div>
-              <p className="text-base font-extrabold text-slate-900 mt-2">
+              <p className="text-base font-extrabold text-slate-900 dark:text-slate-50 mt-2">
                 {formatCurrency(stats.totalRevenue)}
               </p>
             </CardBody>
           </Card>
 
-          <Card className="bg-white border-slate-100/50">
+          <Card className="bg-white dark:bg-slate-900 dark:bg-slate-900 border-slate-100 dark:border-slate-800/50 dark:border-slate-800">
             <CardBody className="p-4.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Diterima</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500">Diterima</span>
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
               </div>
               <p className="text-base font-extrabold text-emerald-600 mt-2">
@@ -228,10 +221,10 @@ export default function Dashboard() {
             </CardBody>
           </Card>
 
-          <Card className="bg-white border-slate-100/50">
+          <Card className="bg-white dark:bg-slate-900 dark:bg-slate-900 border-slate-100 dark:border-slate-800/50 dark:border-slate-800">
             <CardBody className="p-4.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Hutang</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500">Hutang</span>
                 <div className="w-2 h-2 rounded-full bg-rose-500" />
               </div>
               <p className="text-base font-extrabold text-rose-600 mt-2">
@@ -240,34 +233,55 @@ export default function Dashboard() {
             </CardBody>
           </Card>
 
-          <Card className="bg-white border-slate-100/50">
+          <Card className="bg-white dark:bg-slate-900 dark:bg-slate-900 border-slate-100 dark:border-slate-800/50 dark:border-slate-800">
             <CardBody className="p-4.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Transaksi</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500">Transaksi</span>
                 <div className="w-2 h-2 rounded-full bg-amber-500" />
               </div>
-              <p className="text-base font-extrabold text-slate-900 mt-2">
-                {stats.totalTransactions} <span className="text-xs text-slate-400 font-medium">kali</span>
+              <p className="text-base font-extrabold text-slate-900 dark:text-slate-50 mt-2">
+                {stats.totalTransactions} <span className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">kali</span>
               </p>
             </CardBody>
           </Card>
 
-          <Card className="bg-white border-slate-100/50 col-span-2">
+          <Card className="bg-white dark:bg-slate-900 dark:bg-slate-900 border-slate-100 dark:border-slate-800/50 dark:border-slate-800 col-span-2">
             <CardBody className="p-4.5 flex justify-between items-center">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-semibold">Total Pelanggan</span>
-                <p className="text-base font-extrabold text-slate-900 mt-1.5">
-                  {totalCustomers} <span className="text-xs text-slate-400 font-medium">orang</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 font-semibold">Total Pelanggan</span>
+                <p className="text-base font-extrabold text-slate-900 dark:text-slate-50 mt-1.5">
+                  {totalCustomers} <span className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">orang</span>
                 </p>
               </div>
-              <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center">
-                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
             </CardBody>
           </Card>
         </div>
+
+        {/* Month-over-Month Insight */}
+        {prevStats && prevStats.totalTransactions > 0 && (
+          <Card className="bg-indigo-50/50 dark:bg-indigo-950/30 border-indigo-100/50 dark:border-indigo-800/30">
+            <CardBody className="p-4">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                  {(() => {
+                    const pct = ((stats.totalRevenue - prevStats.totalRevenue) / prevStats.totalRevenue) * 100;
+                    const arrow = pct >= 0 ? '↑' : '↓';
+                    const label = pct >= 0 ? 'naik' : 'turun';
+                    return `Omzet ${arrow} ${Math.abs(pct).toFixed(1)}% ${label} dari ${getMonthName(month === 1 ? 12 : month - 1)}`;
+                  })()}
+                </p>
+              </div>
+            </CardBody>
+          </Card>
+        )}
 
         {/* Quick Action Trigger */}
         <Link to="/transactions/new" className="block">
@@ -282,16 +296,16 @@ export default function Dashboard() {
         {/* Today's Transactions Feed */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Transaksi Hari Ini</h3>
-            <Link to="/transactions" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500">Transaksi Hari Ini</h3>
+            <Link to="/transactions" className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:underline">
               Lihat Semua
             </Link>
           </div>
 
           {todayTransactions.length === 0 ? (
-            <Card className="bg-white border-slate-100/50">
+            <Card className="bg-white dark:bg-slate-900 dark:bg-slate-900 border-slate-100 dark:border-slate-800/50 dark:border-slate-800">
               <CardBody className="py-8">
-                <p className="text-center text-xs text-slate-400 font-medium">
+                <p className="text-center text-xs text-slate-400 dark:text-slate-500 font-medium">
                   Belum ada transaksi hari ini
                 </p>
               </CardBody>
@@ -303,28 +317,28 @@ export default function Dashboard() {
                 const statusColor = 
                   transaction.payment_status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
                   transaction.payment_status === 'debt' ? 'bg-rose-50 text-rose-700' :
-                  transaction.payment_status === 'partial' ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-600';
+                  transaction.payment_status === 'partial' ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600';
 
                 return (
-                  <Card key={transaction.id} className="bg-white hover:border-indigo-100 transition-colors">
+                  <Card key={transaction.id} className="bg-white dark:bg-slate-900 dark:bg-slate-900 hover:border-indigo-100 dark:hover:border-indigo-800 transition-colors">
                     <CardBody className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
                           {/* Circular User Avatar Badge */}
-                          <div className="w-10 h-10 rounded-2xl bg-indigo-50/70 border border-indigo-100/30 flex items-center justify-center font-bold text-indigo-600 text-sm">
+                          <div className="w-10 h-10 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/50 border border-indigo-100/30 dark:border-indigo-800/30 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 text-sm">
                             {transaction.customer.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-800">
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                               {transaction.customer.name}
                             </p>
-                            <p className="text-xs text-slate-400 mt-0.5">
+                            <p className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">
                               {transaction.product_name}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-extrabold text-slate-900">
+                          <p className="text-sm font-extrabold text-slate-900 dark:text-slate-50">
                             {formatCurrency(transaction.selling_price)}
                           </p>
                           <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mt-1.5 ${statusColor}`}>

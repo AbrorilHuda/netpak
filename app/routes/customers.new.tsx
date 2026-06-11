@@ -70,7 +70,7 @@ export default function NewCustomer() {
       <Header 
         title="Tambah Pelanggan" 
         action={
-          <button onClick={() => navigate(-1)} className="text-blue-600">
+          <button onClick={() => navigate(-1)} className="text-indigo-600">
             Batal
           </button>
         }
@@ -80,7 +80,7 @@ export default function NewCustomer() {
         <Card>
           <CardBody>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mb-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}

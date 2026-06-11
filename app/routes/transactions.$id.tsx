@@ -12,6 +12,7 @@ import { supabase } from '~/lib/supabase';
 import { formatCurrency, parseCurrency } from '~/lib/currency';
 import { formatDateShort, formatDateInput } from '~/lib/date';
 import { getPaymentStatusLabel, getPaymentStatusColor } from '~/lib/calculations';
+import { normalizeJoin, formatWhatsAppNumber } from '~/lib/validators';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -83,7 +84,7 @@ export default function TransactionDetail() {
           customer:customers(id, name, phone)
         `)
         .eq('id', id)
-        .eq('user_id', user?.id)
+        .eq('user_id', user!.id)
         .single();
 
       if (transError) throw transError;
@@ -91,7 +92,7 @@ export default function TransactionDetail() {
       if (transData) {
         setTransaction({
           ...transData,
-          customer: Array.isArray(transData.customer) ? transData.customer[0] : transData.customer,
+          customer: normalizeJoin(transData.customer as any),
         } as TransactionDetails);
 
         // Prefill payment amount with remaining debt
@@ -103,7 +104,7 @@ export default function TransactionDetail() {
         .from('payments')
         .select('*')
         .eq('transaction_id', id)
-        .eq('user_id', user?.id)
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
 
       if (payError) throw payError;
@@ -113,7 +114,7 @@ export default function TransactionDetail() {
       const { data: profileData } = await supabase
         .from('profiles')
         .select('phone')
-        .eq('id', user?.id)
+        .eq('id', user!.id)
         .maybeSingle();
 
       if (profileData?.phone) {
@@ -128,13 +129,6 @@ export default function TransactionDetail() {
     }
   };
 
-  const formatWhatsAppNumber = (num: string) => {
-    let cleaned = num.replace(/[^\d]/g, '');
-    if (cleaned.startsWith('0')) {
-      cleaned = '62' + cleaned.slice(1);
-    }
-    return cleaned;
-  };
 
   const handleSendWhatsApp = () => {
     if (!transaction || !profilePhone) return;
@@ -254,7 +248,7 @@ export default function TransactionDetail() {
       <AppShell>
         <Header title="Detail Transaksi" />
         <div className="p-5 text-center">
-          <p className="text-slate-500">Transaksi tidak ditemukan.</p>
+          <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500">Transaksi tidak ditemukan.</p>
         </div>
       </AppShell>
     );
@@ -264,14 +258,14 @@ export default function TransactionDetail() {
   const statusColor = 
     transaction.payment_status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
     transaction.payment_status === 'debt' ? 'bg-rose-50 text-rose-700' :
-    transaction.payment_status === 'partial' ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-600';
+    transaction.payment_status === 'partial' ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600';
 
   return (
     <AppShell>
       <Header 
         title="Detail Transaksi" 
         action={
-          <button onClick={() => navigate(-1)} className="text-sm font-bold text-slate-500 hover:text-slate-700">
+          <button onClick={() => navigate(-1)} className="text-sm font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200">
             Kembali
           </button>
         }
@@ -286,12 +280,12 @@ export default function TransactionDetail() {
         )}
 
         {/* Transaction Summary Card */}
-        <Card className="overflow-hidden border-slate-100/50">
+        <Card className="overflow-hidden border-slate-100 dark:border-slate-800/50">
           <CardBody className="p-6 space-y-5">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Nama Produk</p>
-                <h2 className="text-lg font-extrabold text-slate-900 tracking-tight mt-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Nama Produk</p>
+                <h2 className="text-lg font-extrabold text-slate-900 dark:text-slate-50 tracking-tight mt-1">
                   {transaction.product_name}
                 </h2>
               </div>
@@ -303,19 +297,19 @@ export default function TransactionDetail() {
             {/* Price Metrics Bar */}
             <div className="grid grid-cols-3 gap-4 pt-3 border-t border-slate-50">
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Total Tagihan</p>
-                <p className="text-sm font-extrabold text-slate-900 mt-1">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Tagihan</p>
+                <p className="text-sm font-extrabold text-slate-900 dark:text-slate-50 mt-1">
                   {formatCurrency(transaction.selling_price)}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Telah Dibayar</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Telah Dibayar</p>
                 <p className="text-sm font-extrabold text-emerald-600 mt-1">
                   {formatCurrency(transaction.paid_amount)}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Sisa Hutang</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Sisa Hutang</p>
                 <p className="text-sm font-extrabold text-rose-600 mt-1">
                   {formatCurrency(transaction.remaining_amount)}
                 </p>
@@ -325,26 +319,26 @@ export default function TransactionDetail() {
             {/* Additional Info Table */}
             <div className="space-y-2.5 pt-3 border-t border-slate-50 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">Pelanggan</span>
-                <span className="font-bold text-slate-800">{transaction.customer.name}</span>
+                <span className="text-slate-400 dark:text-slate-500 font-medium">Pelanggan</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">{transaction.customer.name}</span>
               </div>
               {transaction.customer.phone && (
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-medium">No. HP Pelanggan</span>
-                  <span className="font-bold text-slate-800">{transaction.customer.phone}</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium">No. HP Pelanggan</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100">{transaction.customer.phone}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">Tanggal Transaksi</span>
-                <span className="font-bold text-slate-800">{formatDateShort(transaction.transaction_date)}</span>
+                <span className="text-slate-400 dark:text-slate-500 font-medium">Tanggal Transaksi</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">{formatDateShort(transaction.transaction_date)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">Metode Awal</span>
-                <span className="font-bold text-slate-800 uppercase tracking-wide">{transaction.payment_method}</span>
+                <span className="text-slate-400 dark:text-slate-500 font-medium">Metode Awal</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">{transaction.payment_method}</span>
               </div>
               {transaction.notes && (
-                <div className="pt-2 border-t border-slate-50 text-slate-500 leading-relaxed">
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Catatan</span>
+                <div className="pt-2 border-t border-slate-50 text-slate-500 dark:text-slate-400 dark:text-slate-500 leading-relaxed">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Catatan</span>
                   {transaction.notes}
                 </div>
               )}
@@ -429,11 +423,11 @@ export default function TransactionDetail() {
 
         {/* Payment History / Ledger Timeline */}
         <div className="space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Riwayat Pembayaran (Ledger)</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Riwayat Pembayaran (Ledger)</h3>
           
           {payments.length === 0 ? (
-            <Card className="border-slate-100/50">
-              <CardBody className="py-6 text-center text-xs text-slate-400 font-medium">
+            <Card className="border-slate-100 dark:border-slate-800/50">
+              <CardBody className="py-6 text-center text-xs text-slate-400 dark:text-slate-500 font-medium">
                 Belum ada riwayat pembayaran yang tercatat.
               </CardBody>
             </Card>
@@ -446,17 +440,17 @@ export default function TransactionDetail() {
                   
                   <div>
                     <div className="flex justify-between items-start">
-                      <p className="text-sm font-extrabold text-slate-800">
+                      <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100">
                         {formatCurrency(pay.amount)}
                       </p>
-                      <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
                         {pay.payment_method}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1 font-medium leading-relaxed">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1 font-medium leading-relaxed">
                       {pay.notes || 'Pembayaran'}
                     </p>
-                    <p className="text-[10px] text-slate-400 font-semibold mt-1">
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-1">
                       {formatDateShort(pay.payment_date)}
                     </p>
                   </div>

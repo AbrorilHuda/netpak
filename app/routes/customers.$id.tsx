@@ -236,7 +236,7 @@ export default function CustomerDetail() {
       <AppShell>
         <Header title="Detail Pelanggan" />
         <div className="p-5 text-center">
-          <p className="text-slate-500">Pelanggan tidak ditemukan.</p>
+          <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500">Pelanggan tidak ditemukan.</p>
         </div>
       </AppShell>
     );
@@ -258,7 +258,7 @@ export default function CustomerDetail() {
       <Header 
         title={customer.name} 
         action={
-          <button onClick={() => navigate('/customers')} className="text-sm font-bold text-slate-500 hover:text-slate-700">
+          <button onClick={() => navigate('/customers')} className="text-sm font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200">
             Kembali
           </button>
         }
@@ -273,43 +273,43 @@ export default function CustomerDetail() {
         )}
 
         {/* Customer Quick Profile Info */}
-        <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 p-4 rounded-3xl">
+        <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-4 rounded-3xl">
           <div className="w-12 h-12 rounded-2xl bg-indigo-500 flex items-center justify-center font-extrabold text-white text-base shadow-md shrink-0">
             {customer.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-extrabold text-slate-800 truncate">{customer.name}</h2>
+            <h2 className="text-sm font-extrabold text-slate-800 dark:text-slate-100 truncate">{customer.name}</h2>
             {customer.phone && (
-              <p className="text-xs text-slate-500 font-semibold mt-0.5">{customer.phone}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-semibold mt-0.5">{customer.phone}</p>
             )}
             {customer.address && (
-              <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">{customer.address}</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">{customer.address}</p>
             )}
           </div>
         </div>
 
         {/* Financial Metrics Row */}
         <div className="grid grid-cols-3 gap-3">
-          <Card className="border-slate-100/50 shadow-xs">
+          <Card className="border-slate-100 dark:border-slate-800/50 shadow-xs">
             <CardBody className="p-3 text-center">
-              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-400">Belanja</span>
-              <span className="block text-xs font-extrabold text-slate-900 mt-1 truncate">
+              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Belanja</span>
+              <span className="block text-xs font-extrabold text-slate-900 dark:text-slate-50 mt-1 truncate">
                 {formatCurrency(totalSpent)}
               </span>
             </CardBody>
           </Card>
-          <Card className={`border-slate-100/50 shadow-xs ${totalDebt > 0 ? 'bg-rose-50/20 border-rose-100/60' : ''}`}>
+          <Card className={`border-slate-100 dark:border-slate-800/50 shadow-xs ${totalDebt > 0 ? 'bg-rose-50/20 border-rose-100/60' : ''}`}>
             <CardBody className="p-3 text-center">
-              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-400">Hutang</span>
-              <span className={`block text-xs font-extrabold mt-1 truncate ${totalDebt > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Hutang</span>
+              <span className={`block text-xs font-extrabold mt-1 truncate ${totalDebt > 0 ? 'text-rose-600' : 'text-slate-900 dark:text-slate-50'}`}>
                 {formatCurrency(totalDebt)}
               </span>
             </CardBody>
           </Card>
-          <Card className="border-slate-100/50 shadow-xs">
+          <Card className="border-slate-100 dark:border-slate-800/50 shadow-xs">
             <CardBody className="p-3 text-center">
-              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-400">Transaksi</span>
-              <span className="block text-xs font-extrabold text-slate-900 mt-1">
+              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Transaksi</span>
+              <span className="block text-xs font-extrabold text-slate-900 dark:text-slate-50 mt-1">
                 {totalTransactionsCount}
               </span>
             </CardBody>
@@ -317,13 +317,13 @@ export default function CustomerDetail() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-100 gap-1.5 p-1 bg-slate-50 rounded-2xl">
+        <div className="flex border-b border-slate-100 dark:border-slate-800 gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
           <button
             onClick={() => setActiveTab('history')}
             className={`flex-1 py-2.5 text-xs font-bold text-center rounded-xl transition-all duration-200 ${
               activeTab === 'history'
-                ? 'bg-white text-indigo-600 shadow-sm border border-slate-100'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm border border-slate-100 dark:border-slate-800'
+                : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200'
             }`}
           >
             Riwayat & Perpanjangan
@@ -332,8 +332,8 @@ export default function CustomerDetail() {
             onClick={() => setActiveTab('edit')}
             className={`flex-1 py-2.5 text-xs font-bold text-center rounded-xl transition-all duration-200 ${
               activeTab === 'edit'
-                ? 'bg-white text-indigo-600 shadow-sm border border-slate-100'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm border border-slate-100 dark:border-slate-800'
+                : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200'
             }`}
           >
             Edit Profil
@@ -348,7 +348,7 @@ export default function CustomerDetail() {
             {activeFourWeekPackages.length > 0 && (
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                     Kontrol Paket 4 Mingguan
                   </h3>
                   <span className="text-[9px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
@@ -364,15 +364,15 @@ export default function CustomerDetail() {
                     const isFullyCompleted = completed >= duration;
 
                     return (
-                      <Card key={pkg.id} className={`border-slate-100/60 shadow-sm ${isFullyCompleted ? 'bg-emerald-50/10 border-emerald-100/40' : ''}`}>
+                      <Card key={pkg.id} className={`border-slate-100 dark:border-slate-800/60 shadow-sm ${isFullyCompleted ? 'bg-emerald-50/10 border-emerald-100/40' : ''}`}>
                         <CardBody className="p-4 space-y-4">
                           {/* Package Header */}
                           <div className="flex justify-between items-start gap-2">
                             <div>
-                              <h4 className="text-xs font-extrabold text-slate-800 leading-tight">
+                              <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
                                 {pkg.product_name}
                               </h4>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-1">
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-1">
                                 Dibeli: {formatDateShort(pkg.transaction_date)}
                               </p>
                             </div>
@@ -391,11 +391,11 @@ export default function CustomerDetail() {
                               const isClickable = weekNum === completed || weekNum === completed + 1;
                               const dateChecked = history[weekNum.toString()];
 
-                              let statusClass = 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed';
+                              let statusClass = 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed';
                               if (isChecked) {
                                 statusClass = 'bg-indigo-600 border-indigo-600 text-white scale-102';
                               } else if (isClickable) {
-                                statusClass = 'bg-white border-indigo-200 text-indigo-600 hover:border-indigo-400 cursor-pointer border-dashed border-2';
+                                statusClass = 'bg-white dark:bg-slate-900 border-indigo-200 text-indigo-600 hover:border-indigo-400 cursor-pointer border-dashed border-2';
                               }
 
                               return (
@@ -414,7 +414,7 @@ export default function CustomerDetail() {
                                       `W${weekNum}`
                                     )}
                                   </button>
-                                  <span className="text-[8px] font-bold text-slate-400 text-center uppercase tracking-wide">
+                                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 text-center uppercase tracking-wide">
                                     {isChecked ? (
                                       dateChecked ? formatDateShort(dateChecked).split(' ')[0] : 'Selesai'
                                     ) : (
@@ -446,14 +446,14 @@ export default function CustomerDetail() {
 
             {/* Complete Transaction History List */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Riwayat Pembelian & Transaksi
               </h3>
 
               {transactions.length === 0 ? (
-                <Card className="border-slate-100/50 shadow-xs">
+                <Card className="border-slate-100 dark:border-slate-800/50 shadow-xs">
                   <CardBody className="py-8 text-center">
-                    <p className="text-slate-400 text-xs font-medium">Belum ada riwayat transaksi pelanggan.</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Belum ada riwayat transaksi pelanggan.</p>
                   </CardBody>
                 </Card>
               ) : (
@@ -462,14 +462,14 @@ export default function CustomerDetail() {
                     const statusColor = getPaymentStatusColor(trans.payment_status);
                     return (
                       <Link key={trans.id} to={`/transactions/${trans.id}`}>
-                        <Card className="border-slate-100/50 shadow-xs hover:bg-slate-50/50 transition-colors active:scale-[0.99] duration-200">
+                        <Card className="border-slate-100 dark:border-slate-800/50 shadow-xs hover:bg-slate-50/50 transition-colors active:scale-[0.99] duration-200">
                           <CardBody className="p-4">
                             <div className="flex justify-between items-start gap-2">
                               <div className="min-w-0">
-                                <h4 className="text-xs font-extrabold text-slate-800 truncate">
+                                <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 truncate">
                                   {trans.product_name}
                                 </h4>
-                                <p className="text-[10px] text-slate-400 font-semibold mt-1">
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-1">
                                   {formatDateShort(trans.transaction_date)}
                                 </p>
                               </div>
@@ -478,8 +478,8 @@ export default function CustomerDetail() {
                               </span>
                             </div>
 
-                            <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-50 text-[10px] font-bold text-slate-400">
-                              <span>Total: <span className="text-slate-700">{formatCurrency(trans.selling_price)}</span></span>
+                            <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-50 text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                              <span>Total: <span className="text-slate-700 dark:text-slate-200">{formatCurrency(trans.selling_price)}</span></span>
                               {trans.remaining_amount > 0 && (
                                 <span className="text-rose-500">Sisa: {formatCurrency(trans.remaining_amount)}</span>
                               )}
@@ -495,7 +495,7 @@ export default function CustomerDetail() {
           </div>
         ) : (
           /* Profile Editing Tab */
-          <Card className="border-slate-100/60 shadow-sm animate-fade-in-up">
+          <Card className="border-slate-100 dark:border-slate-800/60 shadow-sm animate-fade-in-up">
             <CardBody className="p-6">
               <form onSubmit={handleSubmit} className="space-y-5">
                 <Input

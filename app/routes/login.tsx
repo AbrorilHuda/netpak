@@ -52,7 +52,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-5 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center p-5 relative overflow-hidden font-sans">
       {/* Premium Warm Ambient Decorative Blobs (No Neon/AI vibes) */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-amber-100/40 blur-[100px] animate-blob pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-100/50 blur-[100px] animate-blob-delayed pointer-events-none" />
@@ -69,8 +69,8 @@ export default function Login() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Transaksi Kuota</h1>
-            <p className="text-sm text-slate-400 mt-2 font-medium">Kelola bisnis kuota Anda dengan mudah</p>
+            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">Transaksi Kuota</h1>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-2 font-medium">Kelola bisnis kuota Anda dengan mudah</p>
           </div>
 
           {/* Error Message */}
@@ -119,7 +119,7 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-slate-400 text-xs font-semibold mt-8 tracking-wide">
+        <p className="text-center text-slate-400 dark:text-slate-500 text-xs font-semibold mt-8 tracking-wide">
           © 2026 TRANSAKSI KUOTA • PREMIUM DOCK
         </p>
       </div>

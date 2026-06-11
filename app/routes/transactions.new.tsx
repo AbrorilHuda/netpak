@@ -176,7 +176,8 @@ export default function NewTransaction() {
         }
       }
 
-      const { error: insertError } = await supabase
+      // Insert transaction and return the new row's ID (no race condition)
+      const { data: insertedTransaction, error: insertError } = await supabase
         .from('transactions')
         .insert({
           user_id: user?.id!,
@@ -195,33 +196,24 @@ export default function NewTransaction() {
           duration_weeks: formData.duration_weeks,
           completed_weeks: 1,
           renewal_history: renewalHistory,
-        });
+        })
+        .select('id')
+        .single();
 
       if (insertError) throw insertError;
 
-      // If there's a payment, record it
-      if (paidAmount > 0) {
-        // Get the transaction ID we just created
-        const { data: transactionData } = await supabase
-          .from('transactions')
-          .select('id')
-          .eq('user_id', user?.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (transactionData) {
-          await supabase
-            .from('payments')
-            .insert({
-              user_id: user?.id!,
-              transaction_id: transactionData.id,
-              payment_date: formData.transaction_date,
-              amount: paidAmount,
-              payment_method: formData.payment_method as any,
-              notes: 'Pembayaran awal',
-            });
-        }
+      // If there's a payment, record it using the returned ID
+      if (paidAmount > 0 && insertedTransaction) {
+        await supabase
+          .from('payments')
+          .insert({
+            user_id: user?.id!,
+            transaction_id: insertedTransaction.id,
+            payment_date: formData.transaction_date,
+            amount: paidAmount,
+            payment_method: formData.payment_method as any,
+            notes: 'Pembayaran awal',
+          });
       }
 
       navigate('/transactions');
@@ -242,7 +234,7 @@ export default function NewTransaction() {
       <Header 
         title="Transaksi Baru" 
         action={
-          <button onClick={() => navigate(-1)} className="text-blue-600">
+          <button onClick={() => navigate(-1)} className="text-indigo-600">
             Batal
           </button>
         }
@@ -252,7 +244,7 @@ export default function NewTransaction() {
         <Card>
           <CardBody>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mb-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
@@ -268,19 +260,19 @@ export default function NewTransaction() {
               />
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1.5 ml-1">
                   Pelanggan <span className="text-rose-500 ml-1">*</span>
                 </label>
                 <div 
                   onClick={() => !loading && setShowCustomerModal(true)}
-                  className="w-full px-4 py-3.5 text-sm bg-slate-50/60 border border-slate-200/80 rounded-2xl cursor-pointer flex justify-between items-center hover:bg-slate-50/90 active:scale-[0.99] transition-all duration-200"
+                  className="w-full px-4 py-3.5 text-sm bg-slate-50/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl cursor-pointer flex justify-between items-center hover:bg-slate-50/90 active:scale-[0.99] transition-all duration-200"
                 >
-                  <span className={selectedCustomer ? 'text-slate-800 font-bold' : 'text-slate-400 font-semibold'}>
+                  <span className={selectedCustomer ? 'text-slate-800 dark:text-slate-100 font-bold' : 'text-slate-400 dark:text-slate-500 font-semibold'}>
                     {selectedCustomer 
                       ? `${selectedCustomer.name} ${selectedCustomer.phone ? `(${selectedCustomer.phone})` : ''}` 
                       : '-- Pilih Pelanggan --'}
                   </span>
-                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
@@ -391,13 +383,13 @@ export default function NewTransaction() {
       {/* Searchable Customer Selector Modal */}
       {showCustomerModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in-up">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4 max-h-[80vh] flex flex-col">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4 max-h-[80vh] flex flex-col">
             
             <div className="flex justify-between items-center">
-              <h3 className="text-base font-extrabold text-slate-900 tracking-tight">Pilih Pelanggan</h3>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">Pilih Pelanggan</h3>
               <button 
                 type="button"
-                className="text-xs font-bold text-slate-400 hover:text-slate-600 px-3 py-1.5 bg-slate-100 rounded-full"
+                className="text-xs font-bold text-slate-400 dark:text-slate-500 hover:text-slate-600 px-3 py-1.5 bg-slate-100 rounded-full"
                 onClick={() => {
                   setShowCustomerModal(false);
                   setSearchCustomerQuery('');
@@ -418,7 +410,7 @@ export default function NewTransaction() {
             {/* Customer List Container */}
             <div className="overflow-y-auto no-scrollbar flex-1 divide-y divide-slate-50 min-h-[220px]">
               {filteredCustomers.length === 0 ? (
-                <p className="text-center text-xs text-slate-400 font-medium py-12">
+                <p className="text-center text-xs text-slate-400 dark:text-slate-500 font-medium py-12">
                   Pelanggan tidak ditemukan
                 </p>
               ) : (
@@ -431,15 +423,15 @@ export default function NewTransaction() {
                       setShowCustomerModal(false);
                       setSearchCustomerQuery('');
                     }}
-                    className="py-3 px-2.5 hover:bg-slate-50 active:bg-slate-100 rounded-2xl cursor-pointer transition-colors flex items-center gap-3.5"
+                    className="py-3 px-2.5 hover:bg-slate-50 dark:bg-slate-800/50 active:bg-slate-100 rounded-2xl cursor-pointer transition-colors flex items-center gap-3.5"
                   >
                     <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100/30 flex items-center justify-center font-bold text-indigo-600 text-xs shrink-0">
                       {c.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-800 truncate">{c.name}</p>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{c.name}</p>
                       {c.phone && (
-                        <p className="text-xs text-slate-400 font-semibold mt-0.5">{c.phone}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-0.5">{c.phone}</p>
                       )}
                     </div>
                   </div>
