@@ -8,6 +8,7 @@ import { Button } from '~/components/ui/Button';
 import { Input } from '~/components/ui/Input';
 import { useAuth } from '~/lib/auth';
 import { supabase } from '~/lib/supabase';
+import { useToast } from '~/components/ui/DynamicIsland';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -18,8 +19,8 @@ export function meta({}: Route.MetaArgs) {
 export default function NewCustomer() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -30,7 +31,6 @@ export default function NewCustomer() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -38,7 +38,7 @@ export default function NewCustomer() {
         const cleanedPhone = formData.phone.replace(/[^\d+]/g, '');
         const phoneRegex = /^(?:\+62|62|0)8[1-9][0-9]{7,10}$/;
         if (!phoneRegex.test(cleanedPhone)) {
-          setError('Format nomor HP tidak valid. Nomor HP Indonesia harus memiliki 10-13 digit dan diawali dengan 08, 628, atau +628.');
+          showToast('Format nomor HP tidak valid.', 'error');
           setLoading(false);
           return;
         }
@@ -59,7 +59,7 @@ export default function NewCustomer() {
       navigate('/customers');
     } catch (err) {
       console.error('Error creating customer:', err);
-      setError('Gagal menyimpan pelanggan. Silakan coba lagi.');
+      showToast('Gagal menyimpan pelanggan.', 'error');
     } finally {
       setLoading(false);
     }
@@ -79,12 +79,6 @@ export default function NewCustomer() {
       <div className="p-4">
         <Card>
           <CardBody>
-            {error && (
-              <div className="mb-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 label="Nama Pelanggan"

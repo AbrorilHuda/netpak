@@ -13,6 +13,7 @@ import { formatCurrency, parseCurrency } from '~/lib/currency';
 import { formatDateShort, formatDateInput } from '~/lib/date';
 import { getPaymentStatusLabel, getPaymentStatusColor } from '~/lib/calculations';
 import { normalizeJoin, formatWhatsAppNumber } from '~/lib/validators';
+import { useToast } from '~/components/ui/DynamicIsland';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -51,8 +52,8 @@ export default function TransactionDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+  const { showToast, showConfirm } = useToast();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [transaction, setTransaction] = useState<TransactionDetails | null>(null);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [profilePhone, setProfilePhone] = useState('');
@@ -63,7 +64,6 @@ export default function TransactionDetail() {
   const [paymentNotes, setPaymentNotes] = useState('');
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (user && id) {
@@ -74,7 +74,6 @@ export default function TransactionDetail() {
   const loadTransactionDetails = async () => {
     try {
       setLoading(true);
-      setError('');
 
       // 1. Fetch transaction
       const { data: transData, error: transError } = await supabase
@@ -123,7 +122,7 @@ export default function TransactionDetail() {
 
     } catch (err) {
       console.error('Error loading transaction details:', err);
-      setError('Gagal memuat detail transaksi.');
+      showToast('Gagal memuat detail transaksi.', 'error');
     } finally {
       setLoading(false);
     }
@@ -144,20 +143,19 @@ export default function TransactionDetail() {
     e.preventDefault();
     if (!transaction) return;
 
-    setError('');
     setSubmittingPayment(true);
 
     try {
       const amountToPay = parseFloat(paymentAmount) || 0;
 
       if (amountToPay <= 0) {
-        setError('Jumlah pembayaran harus lebih besar dari 0');
+        showToast('Jumlah pembayaran harus lebih besar dari 0', 'error');
         setSubmittingPayment(false);
         return;
       }
 
       if (amountToPay > transaction.remaining_amount) {
-        setError(`Jumlah pembayaran melebihi sisa hutang (${formatCurrency(transaction.remaining_amount)})`);
+        showToast(`Jumlah pembayaran melebihi sisa hutang (${formatCurrency(transaction.remaining_amount)})`, 'error');
         setSubmittingPayment(false);
         return;
       }
@@ -204,14 +202,16 @@ export default function TransactionDetail() {
       await loadTransactionDetails();
     } catch (err) {
       console.error('Error recording payment:', err);
-      setError('Gagal mencatat pembayaran.');
+      showToast('Gagal mencatat pembayaran.', 'error');
     } finally {
       setSubmittingPayment(false);
     }
   };
 
   const handleDeleteTransaction = async () => {
-    setError('');
+    const confirmed = await showConfirm('Apakah Anda yakin ingin menghapus transaksi ini? Seluruh riwayat pembayaran juga akan dihapus permanen.');
+    if (!confirmed) return;
+
     setDeleting(true);
 
     try {
@@ -226,7 +226,7 @@ export default function TransactionDetail() {
       navigate('/transactions');
     } catch (err) {
       console.error('Error deleting transaction:', err);
-      setError('Gagal menghapus transaksi.');
+      showToast('Gagal menghapus transaksi.', 'error');
     } finally {
       setDeleting(false);
     }
@@ -272,13 +272,6 @@ export default function TransactionDetail() {
       />
 
       <div className="p-5 space-y-6 animate-fade-in-up">
-        {error && (
-          <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
-            <div className="w-2 h-2 bg-rose-500 rounded-full shrink-0" />
-            <p className="text-xs font-semibold text-rose-600 leading-normal">{error}</p>
-          </div>
-        )}
-
         {/* Transaction Summary Card */}
         <Card className="overflow-hidden border-slate-100 dark:border-slate-800/50">
           <CardBody className="p-6 space-y-5">
@@ -462,47 +455,18 @@ export default function TransactionDetail() {
 
         {/* Delete Transaction Area */}
         <div className="pt-4">
-          {!showConfirmDelete ? (
-            <Button
-              type="button"
-              variant="ghost"
-              fullWidth
-              size="lg"
-              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-2xl font-bold"
-              onClick={() => setShowConfirmDelete(true)}
-              disabled={submittingPayment || deleting}
-            >
-              Hapus / Batalkan Transaksi
-            </Button>
-          ) : (
-            <Card className="border-rose-100 bg-rose-50/20">
-              <CardBody className="p-4 space-y-3">
-                <p className="text-xs font-bold text-rose-700 text-center leading-relaxed">
-                  Apakah Anda yakin ingin menghapus transaksi ini? Seluruh riwayat pembayaran juga akan dihapus permanen.
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    type="button"
-                    variant="danger"
-                    fullWidth
-                    onClick={handleDeleteTransaction}
-                    loading={deleting}
-                  >
-                    Ya, Hapus
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => setShowConfirmDelete(false)}
-                    disabled={deleting}
-                  >
-                    Batal
-                  </Button>
-                </div>
-              </CardBody>
-            </Card>
-          )}
+          <Button
+            type="button"
+            variant="ghost"
+            fullWidth
+            size="lg"
+            className="text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-700 rounded-2xl font-bold"
+            onClick={handleDeleteTransaction}
+            loading={deleting}
+            disabled={submittingPayment}
+          >
+            Hapus / Batalkan Transaksi
+          </Button>
         </div>
       </div>
     </AppShell>

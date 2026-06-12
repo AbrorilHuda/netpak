@@ -168,15 +168,15 @@ export default function Debts() {
               </CardBody>
             </Card>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-4">
               {filteredTransactions.map((transaction) => {
                 const days = getDebtAge(transaction.transaction_date);
                 const ageLabel = days <= 7 ? `${days}h` : days <= 30 ? `${Math.floor(days / 7)}mgg` : `${Math.floor(days / 30)}bln`;
-                const ageColor = days <= 7 ? 'bg-amber-50 text-amber-600' : days <= 30 ? 'bg-orange-50 text-orange-600' : 'bg-rose-50 text-rose-600';
+                const ageColor = days <= 7 ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' : days <= 30 ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400';
 
                 return (
                   <Link key={transaction.id} to={`/transactions/${transaction.id}`}>
-                    <Card className="hover:bg-slate-50/50 transition-colors duration-200 border-slate-100 dark:border-slate-800/50 shadow-xs active:scale-[0.99]">
+                    <Card className="hover:bg-slate-50/50 transition-colors duration-200 border-slate-100 dark:border-slate-800/50 shadow-xs active:scale-[0.99] mb-2">
                       <CardBody className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">

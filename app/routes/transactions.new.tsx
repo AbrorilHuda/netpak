@@ -12,6 +12,7 @@ import { supabase } from '~/lib/supabase';
 import { formatCurrency, parseCurrency } from '~/lib/currency';
 import { formatDateInput } from '~/lib/date';
 import { calculatePaymentStatus, calculateRemainingAmount, calculateProfit } from '~/lib/calculations';
+import { useToast } from '~/components/ui/DynamicIsland';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -36,8 +37,8 @@ interface Product {
 export default function NewTransaction() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -139,7 +140,6 @@ export default function NewTransaction() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -148,19 +148,19 @@ export default function NewTransaction() {
       const paidAmount = parseFloat(formData.paid_amount) || 0;
 
       if (!formData.customer_id) {
-        setError('Pilih pelanggan terlebih dahulu');
+        showToast('Pilih pelanggan terlebih dahulu', 'error');
         setLoading(false);
         return;
       }
 
       if (!formData.product_name) {
-        setError('Pilih produk terlebih dahulu');
+        showToast('Pilih produk terlebih dahulu', 'error');
         setLoading(false);
         return;
       }
 
       if (sellingPrice <= 0) {
-        setError('Harga jual harus lebih dari 0');
+        showToast('Harga jual harus lebih dari 0', 'error');
         setLoading(false);
         return;
       }
@@ -219,7 +219,7 @@ export default function NewTransaction() {
       navigate('/transactions');
     } catch (err) {
       console.error('Error creating transaction:', err);
-      setError('Gagal menyimpan transaksi. Silakan coba lagi.');
+      showToast('Gagal menyimpan transaksi.', 'error');
     } finally {
       setLoading(false);
     }
@@ -243,12 +243,6 @@ export default function NewTransaction() {
       <div className="p-4">
         <Card>
           <CardBody>
-            {error && (
-              <div className="mb-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 type="date"

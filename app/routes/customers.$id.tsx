@@ -11,6 +11,7 @@ import { supabase } from '~/lib/supabase';
 import { formatCurrency } from '~/lib/currency';
 import { formatDateShort } from '~/lib/date';
 import { getPaymentStatusLabel, getPaymentStatusColor } from '~/lib/calculations';
+import { useToast } from '~/components/ui/DynamicIsland';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -31,11 +32,10 @@ export default function CustomerDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+  const { showToast, showConfirm } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState('');
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [activeTab, setActiveTab] = useState<'history' | 'edit'>('history');
 
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -57,7 +57,6 @@ export default function CustomerDetail() {
   const loadCustomerAndHistory = async () => {
     try {
       setLoading(true);
-      setError('');
 
       // 1. Fetch customer details
       const { data: custData, error: fetchError } = await supabase
@@ -92,7 +91,7 @@ export default function CustomerDetail() {
 
     } catch (err) {
       console.error('Error loading customer details and history:', err);
-      setError('Gagal memuat detail pelanggan dan riwayat transaksi.');
+      showToast('Gagal memuat detail pelanggan.', 'error');
     } finally {
       setLoading(false);
     }
@@ -100,7 +99,6 @@ export default function CustomerDetail() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setSaving(true);
 
     try {
@@ -108,7 +106,7 @@ export default function CustomerDetail() {
         const cleanedPhone = formData.phone.replace(/[^\d+]/g, '');
         const phoneRegex = /^(?:\+62|62|0)8[1-9][0-9]{7,10}$/;
         if (!phoneRegex.test(cleanedPhone)) {
-          setError('Format nomor HP tidak valid. Nomor HP Indonesia harus memiliki 10-13 digit dan diawali dengan 08, 628, atau +628.');
+          showToast('Format nomor HP tidak valid.', 'error');
           setSaving(false);
           return;
         }
@@ -133,14 +131,16 @@ export default function CustomerDetail() {
       setActiveTab('history');
     } catch (err) {
       console.error('Error updating customer:', err);
-      setError('Gagal menyimpan perubahan. Silakan coba lagi.');
+      showToast('Gagal menyimpan perubahan.', 'error');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    setError('');
+    const confirmed = await showConfirm('Apakah Anda yakin ingin menghapus pelanggan ini? Seluruh transaksi terkait akan ikut terhapus.');
+    if (!confirmed) return;
+
     setDeleting(true);
 
     try {
@@ -155,7 +155,7 @@ export default function CustomerDetail() {
       navigate('/customers');
     } catch (err) {
       console.error('Error deleting customer:', err);
-      setError('Gagal menghapus pelanggan. Pastikan pelanggan tidak memiliki transaksi terkait.');
+      showToast('Gagal menghapus pelanggan.', 'error');
     } finally {
       setDeleting(false);
     }
@@ -214,7 +214,7 @@ export default function CustomerDetail() {
       if (updateError) throw updateError;
     } catch (err) {
       console.error('Error updating renewal week:', err);
-      setError('Gagal menyimpan perubahan perpanjangan paket.');
+      showToast('Gagal menyimpan perpanjangan paket.', 'error');
       // Rollback
       setTransactions(originalTransactions);
     }
@@ -265,13 +265,6 @@ export default function CustomerDetail() {
       />
 
       <div className="p-4 space-y-5 animate-fade-in-up">
-        {error && (
-          <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
-            <div className="w-2 h-2 bg-rose-500 rounded-full shrink-0" />
-            <p className="text-xs font-semibold text-rose-600 leading-normal">{error}</p>
-          </div>
-        )}
-
         {/* Customer Quick Profile Info */}
         <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-4 rounded-3xl">
           <div className="w-12 h-12 rounded-2xl bg-indigo-500 flex items-center justify-center font-extrabold text-white text-base shadow-md shrink-0">
@@ -543,45 +536,18 @@ export default function CustomerDetail() {
                     Simpan Perubahan
                   </Button>
 
-                  {!showConfirmDelete ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      fullWidth
-                      size="lg"
-                      className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-2xl font-bold"
-                      onClick={() => setShowConfirmDelete(true)}
-                      disabled={saving || deleting}
-                    >
-                      Hapus Pelanggan
-                    </Button>
-                  ) : (
-                    <div className="p-4 border border-rose-100 bg-rose-50/30 rounded-2xl space-y-3 animate-fade-in-up">
-                      <p className="text-xs font-bold text-rose-700 text-center">
-                        Apakah Anda yakin ingin menghapus pelanggan ini? Seluruh transaksi terkait akan ikut terhapus.
-                      </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button
-                          type="button"
-                          variant="danger"
-                          fullWidth
-                          onClick={handleDelete}
-                          loading={deleting}
-                        >
-                          Ya, Hapus
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          fullWidth
-                          onClick={() => setShowConfirmDelete(false)}
-                          disabled={deleting}
-                        >
-                          Batal
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    fullWidth
+                    size="lg"
+                    className="text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-700 rounded-2xl font-bold"
+                    onClick={handleDelete}
+                    loading={deleting}
+                    disabled={saving}
+                  >
+                    Hapus Pelanggan
+                  </Button>
                 </div>
               </form>
             </CardBody>

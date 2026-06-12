@@ -52,19 +52,19 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center p-5 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-5 relative overflow-hidden font-sans">
       {/* Premium Warm Ambient Decorative Blobs (No Neon/AI vibes) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-amber-100/40 blur-[100px] animate-blob pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-100/50 blur-[100px] animate-blob-delayed pointer-events-none" />
-      <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] rounded-full bg-violet-50/60 blur-[80px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-amber-100/40 dark:bg-amber-900/10 blur-[100px] animate-blob pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-100/50 dark:bg-indigo-900/15 blur-[100px] animate-blob-delayed pointer-events-none" />
+      <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] rounded-full bg-violet-50/60 dark:bg-violet-900/10 blur-[80px] pointer-events-none" />
 
       <div className="w-full max-w-[440px] z-10 animate-fade-in-up">
         {/* Main Card with Glassmorphism */}
-        <div className="bg-white/75 backdrop-blur-xl border border-white/60 shadow-xl shadow-slate-200/50 rounded-3xl p-8 md:p-10">
+        <div className="bg-white/75 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800/60 shadow-xl shadow-slate-200/50 dark:shadow-black/30 rounded-3xl p-8 md:p-10">
           
           {/* Brand/Header */}
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-150/40">
+            <div className="w-14 h-14 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-150/40 dark:shadow-indigo-900/30">
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -75,9 +75,9 @@ export default function Login() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 animate-fade-in-up">
+            <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/30 rounded-2xl flex items-center gap-3 animate-fade-in-up">
               <div className="w-2 h-2 bg-rose-500 rounded-full shrink-0" />
-              <p className="text-xs font-semibold text-rose-600 leading-normal">{error}</p>
+              <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 leading-normal">{error}</p>
             </div>
           )}
 

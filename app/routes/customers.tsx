@@ -171,16 +171,16 @@ export default function Customers() {
         {filteredCustomers.length === 0 ? (
           <Card>
             <CardBody>
-              <p className="text-center text-gray-500 py-8 text-xs font-medium">
+              <p className="text-center text-slate-400 dark:text-slate-500 py-8 text-xs font-medium">
                 {search || filterType !== 'all' ? 'Pelanggan tidak ditemukan' : 'Belum ada pelanggan'}
               </p>
             </CardBody>
           </Card>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-4">
             {filteredCustomers.map((customer) => (
               <Link key={customer.id} to={`/customers/${customer.id}`}>
-                <Card className="hover:bg-slate-50/50 transition-colors duration-200 border-slate-100 dark:border-slate-800/50 shadow-xs">
+                <Card className="hover:bg-slate-50/50 transition-colors duration-200 border-slate-100 dark:border-slate-800/50 shadow-xs mb-2">
                   <CardBody className="p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">

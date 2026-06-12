@@ -255,8 +255,7 @@ export default function Reports() {
                         style={{ cursor: 'pointer' }}>
                         <rect x={x} y={Math.max(y, 10)} width={barWidth}
                           height={Math.max(barH, 2)} rx="4"
-                          fill={isSelected ? '#6366f1' : '#cbd5e1'}
-                          className={isSelected ? '' : 'hover:opacity-70'} />
+                          className={`transition-colors duration-200 ${isSelected ? 'fill-indigo-500' : 'fill-slate-300 dark:fill-slate-600 hover:fill-slate-400 dark:hover:fill-slate-500'}`} />
                         <text x={startX + i * gap} y="118" textAnchor="middle"
                           className={`text-[8px] font-semibold ${
                             isSelected ? 'fill-indigo-600 dark:fill-indigo-400' : 'fill-slate-400 dark:fill-slate-500'
@@ -299,37 +298,37 @@ export default function Reports() {
             Ringkasan Keuangan
           </h2>
           <div className="grid grid-cols-2 gap-2.5">
-            <Card className="bg-gradient-to-br from-slate-50 to-indigo-50/30 border-slate-100 dark:border-slate-800/50">
+            <Card className="bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-slate-900 dark:to-slate-900 border-slate-100 dark:border-slate-800/50">
               <CardBody className="p-4">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Omzet</p>
                 <p className="text-lg font-extrabold text-slate-800 dark:text-slate-100 mt-1">{formatCurrency(report.totalRevenue)}</p>
               </CardBody>
             </Card>
-            <Card className="bg-gradient-to-br from-slate-50 to-slate-100/30 border-slate-100 dark:border-slate-800/50">
+            <Card className="bg-gradient-to-br from-slate-50 to-slate-100/30 dark:from-slate-900 dark:to-slate-900 border-slate-100 dark:border-slate-800/50">
               <CardBody className="p-4">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Modal</p>
                 <p className="text-lg font-extrabold text-slate-800 dark:text-slate-100 mt-1">{formatCurrency(report.totalCost)}</p>
               </CardBody>
             </Card>
-            <Card className="bg-gradient-to-br from-emerald-50/50 to-emerald-50/20 border-emerald-100/30">
+            <Card className="bg-gradient-to-br from-emerald-50/50 to-emerald-50/20 dark:from-emerald-950/20 dark:to-emerald-950/10 border-emerald-100/30 dark:border-emerald-900/30">
               <CardBody className="p-4">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-500">Laba Kotor</p>
-                <p className="text-lg font-extrabold text-emerald-600 mt-1">{formatCurrency(report.totalProfit)}</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400">Laba Kotor</p>
+                <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{formatCurrency(report.totalProfit)}</p>
               </CardBody>
             </Card>
-            <Card className="bg-gradient-to-br from-indigo-50/50 to-indigo-50/20 border-indigo-100/30">
+            <Card className="bg-gradient-to-br from-indigo-50/50 to-indigo-50/20 dark:from-indigo-950/20 dark:to-indigo-950/10 border-indigo-100/30 dark:border-indigo-900/30">
               <CardBody className="p-4">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-indigo-500">Uang Diterima</p>
-                <p className="text-lg font-extrabold text-indigo-600 mt-1">{formatCurrency(report.totalReceived)}</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400">Uang Diterima</p>
+                <p className="text-lg font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">{formatCurrency(report.totalReceived)}</p>
               </CardBody>
             </Card>
-            <Card className="bg-gradient-to-br from-rose-50/50 to-rose-50/20 border-rose-100/30">
+            <Card className="bg-gradient-to-br from-rose-50/50 to-rose-50/20 dark:from-rose-950/20 dark:to-rose-950/10 border-rose-100/30 dark:border-rose-900/30">
               <CardBody className="p-4">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-rose-500">Sisa Hutang</p>
-                <p className="text-lg font-extrabold text-rose-600 mt-1">{formatCurrency(report.totalDebt)}</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-400">Sisa Hutang</p>
+                <p className="text-lg font-extrabold text-rose-600 dark:text-rose-400 mt-1">{formatCurrency(report.totalDebt)}</p>
               </CardBody>
             </Card>
-            <Card className="bg-gradient-to-br from-slate-50 to-violet-50/30 border-slate-100 dark:border-slate-800/50">
+            <Card className="bg-gradient-to-br from-slate-50 to-violet-50/30 dark:from-slate-900 dark:to-slate-900 border-slate-100 dark:border-slate-800/50">
               <CardBody className="p-4">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Transaksi</p>
                 <p className="text-lg font-extrabold text-slate-800 dark:text-slate-100 mt-1">{report.totalTransactions}</p>
@@ -339,15 +338,15 @@ export default function Reports() {
         </div>
 
         {/* Customer Stats */}
-        <Card className="bg-gradient-to-r from-violet-50 to-indigo-50 border-indigo-100/50">
+        <Card className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border-indigo-100/50 dark:border-indigo-900/30">
           <CardBody className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-indigo-500">Pelanggan Aktif</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400">Pelanggan Aktif</p>
                 <p className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-1">{report.uniqueCustomers}</p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Bulan {getMonthName(parseInt(selectedMonth))} {selectedYear}</p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-3xl flex items-center justify-center shadow-lg shadow-indigo-200">
+              <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-3xl flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-indigo-900/30">
                 <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -385,7 +384,7 @@ export default function Reports() {
                         index === 0 ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-sm' :
                         index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white' :
                         index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white' :
-                        'bg-slate-100 text-slate-500 dark:text-slate-400 dark:text-slate-500'
+                        'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                       }`}>
                         {index + 1}
                       </div>

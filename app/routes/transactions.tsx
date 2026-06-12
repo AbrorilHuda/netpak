@@ -147,10 +147,10 @@ export default function Transactions() {
             </CardBody>
           </Card>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-4">
             {filteredTransactions.map((transaction) => (
               <Link key={transaction.id} to={`/transactions/${transaction.id}`}>
-                <Card className="hover:bg-slate-50/50 transition-colors duration-200 border-slate-100 dark:border-slate-800/50 shadow-xs active:scale-[0.99]">
+                <Card className="hover:bg-slate-50/50 transition-colors duration-200 border-slate-100 dark:border-slate-800/50 shadow-xs active:scale-[0.99] mb-2">
                   <CardBody className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
